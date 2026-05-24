@@ -1,0 +1,41 @@
+# Environments
+.env
+.venv
+env/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Data Storage
+data/raw/*.csv
+data/processed/
+*.parquet
+
+# Spark Metadata
+spark-warehouse/
+metastore_db/
+derby.log
+
+# Streamlit
+.streamlit/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archive Files
+*.zip
+*.rar
+*.tar
+*.gz
+*.7z

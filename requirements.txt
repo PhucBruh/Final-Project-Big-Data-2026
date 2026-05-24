@@ -1,0 +1,9 @@
+pyspark
+duckdb
+streamlit
+plotly
+networkx
+pandas
+numpy
+streamlit-extras
+streamlit-antd-components
