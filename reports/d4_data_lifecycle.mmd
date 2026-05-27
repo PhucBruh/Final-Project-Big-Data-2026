@@ -1,0 +1,75 @@
+flowchart TD
+    %% Style
+    classDef raw fill:#f8f9fa,stroke:#ced4da,stroke-width:2px,color:#000
+    classDef spark fill:#e3f2fd,stroke:#90caf9,stroke-width:2px,color:#000
+    classDef storage fill:#e8f5e9,stroke:#a5d6a7,stroke-width:2px,color:#000
+    classDef duckdb fill:#f3e5f5,stroke:#ce93d8,stroke-width:2px,color:#000
+    classDef ui fill:#fff3e0,stroke:#ffb74d,stroke-width:2px,color:#000
+
+    %% 1. Raw Data Input
+    subgraph RAW["1. Bảng Dữ liệu Thô (từ Bảng 1)"]
+        direction TB
+        R1["Dòng 1: Ném trượt (Miss)"]:::raw
+        R2["Dòng 2: Bắt bóng bật bảng (Rebound)"]:::raw
+        R3["Dòng 3: Ném vào (Made 2pt)"]:::raw
+    end
+
+    %% 2. Làm sạch
+    subgraph CLEAN["2. Tiền xử lý (clean_events.py)"]
+        direction TB
+        C1["Xử lý Thời gian & Clutch:<br>Đổi '02:30' ➔ 150s<br>Thỏa mãn (Hiệp 4 + <=300s + Margin<=5) ➔ is_clutch=1"]:::spark
+        C2["Chuẩn hóa Tọa độ:<br>X=100 ➔ x=10.0 (Scale khớp tỷ lệ đồ họa nửa sân)<br>Y=200 ➔ y=20.0"]:::spark
+    end
+
+    %% 3. Tái cấu trúc
+    subgraph RECON["3. Nhận diện Pha bóng (reconstruct_possessions.py)"]
+        P1{"Window lag() nhận diện<br>LAL kiểm soát bóng liên tục<br>➔ Gom 3 dòng thành 1 Possession"}:::spark
+        P2["id='LAL_01', team='LAL', points_scored=2, is_clutch=1"]:::spark
+    end
+
+    %% 4. Metrics
+    subgraph METRICS["4. Cộng dồn Raw Counts (build_metrics.py)"]
+        direction LR
+        M_Team["fact_team_metrics:<br>total_possessions += 1<br>points_scored += 2"]:::spark
+        M_Player["fact_player_metrics:<br>LeBron: fga += 2, fgm += 1, pts += 2"]:::spark
+    end
+
+    %% 5. Parquet
+    subgraph PARQUET["5. Lưu trữ Data Lake (Partition theo Season)"]
+        direction LR
+        DB_Shots[("fact_shots")]:::storage
+        DB_Team[("fact_team_metrics")]:::storage
+        DB_Player[("fact_player_metrics")]:::storage
+    end
+
+    %% 6. DuckDB
+    subgraph DUCKDB["6. Truy vấn & Tính công thức (DuckDB SQL)"]
+        direction TB
+        Q_Team["Tính ORtg:<br>SUM(pts)/SUM(poss)*100"]:::duckdb
+        Q_Player["Tính TS%:<br>PTS / (2*(FGA + 0.44*FTA))"]:::duckdb
+        Q_Shot["Lấy x, y, made_flag<br>WHERE is_clutch=1"]:::duckdb
+    end
+
+    %% 7. UI
+    subgraph UI["7. Render Giao diện (Streamlit Dashboard)"]
+        direction LR
+        U_Radar>"Radar Chart:<br>Cập nhật trục ORtg"]:::ui
+        U_Kpi>"KPI Card:<br>Hiển thị TS%"]:::ui
+        U_Shot>"Shot Chart:<br>Chấm tọa độ thực lên sa bàn"]:::ui
+    end
+
+    %% Luồng liên kết
+    R1 --> C1 & C2
+    C1 & C2 -->|"Ghi dòng ném rổ"| DB_Shots
+
+    R1 & R2 & R3 --> P1 --> P2
+    P2 -->|"Cộng cho Đội"| M_Team
+    R1 & R3 -->|"Cộng cho Cầu thủ"| M_Player
+    C1 -.->|"Truyền cờ is_clutch"| M_Player
+
+    M_Team --> DB_Team
+    M_Player --> DB_Player
+
+    DB_Team --> Q_Team --> U_Radar
+    DB_Player --> Q_Player --> U_Kpi
+    DB_Shots --> Q_Shot --> U_Shot

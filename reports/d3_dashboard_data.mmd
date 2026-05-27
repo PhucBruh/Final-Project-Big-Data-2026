@@ -1,0 +1,35 @@
+flowchart TD
+    subgraph Storage["Parquet Data"]
+        S1["fact_shots (12 cột)"]
+        S2["fact_possessions (6 cột)"]
+        S3["fact_team_metrics (12 cột)"]
+        S4["fact_player_metrics (10 cột)"]
+    end
+
+    subgraph TeamDash["Team Analytics"]
+        T1["Shot Distribution Evolution"]
+        T2["Pace Evolution"]
+        T3["Team Shot Chart"]
+        T4["Offensive Radar"]
+        T5["ORtg vs DRtg Scatter"]
+        T6["Efficiency Table"]
+    end
+
+    subgraph PlayerDash["Player Analytics"]
+        P1["Efficiency Bars + KPI Cards"]
+        P2["Shot Profile Stacked Bar"]
+        P3["Career Efficiency Curve"]
+        P4["Player Shot Chart"]
+    end
+
+    S3 --> T1
+    S3 --> T2
+    S1 --> T3
+    S3 --> T4
+    S3 --> T5
+    S3 --> T6
+
+    S4 --> P1
+    S1 --> P2
+    S4 --> P3
+    S1 --> P4

@@ -1,0 +1,9 @@
+flowchart LR
+    A["CSV Raw Data<br>(Kaggle ~18M events)"] -->|PySpark ETL| B["Spark Processing"]
+    B -->|"1. Ingestion"| C["Schema Definition"]
+    C -->|"2. Cleaning"| D["Normalize & Clutch Flag"]
+    D -->|"3. Possession"| E["Reconstruct Possessions"]
+    E -->|"4. Aggregation"| F["Build Metrics"]
+    F -->|"5. Storage"| G["Parquet Data"]
+    G -->|"SQL Query"| H["DuckDB<br>(In-Memory OLAP)"]
+    H -->|"< 150ms"| I["Streamlit Dashboard<br>+ Plotly Charts"]

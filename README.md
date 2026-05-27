@@ -15,7 +15,7 @@ The raw play-by-play dataset and shot logs can be downloaded from Kaggle.
 
 - **Data Engineering:** PySpark (ETL), Parquet (Storage)
 - **Serving Layer:** DuckDB
-- **Visualization:** Streamlit, Plotly
+- **Visualization:** Streamlit, Plotly, Streamlit-Antd-Components, Streamlit-Extras
 
 ## Architecture
 

@@ -86,11 +86,11 @@ def main():
     st.sidebar.markdown("### System Performance")
     st.sidebar.markdown("""
     <div style='font-size: 0.85em; color: #A0AEC0; background-color: #1A202C; padding: 10px; border-radius: 5px; border-left: 3px solid #00E676;'>
-    <b>Data Scale:</b> 1997-2026 (~15M+ Events)<br>
+    <b>Data Scale:</b> 1997-2026 (~18M+ Events)<br>
     <b>ETL Engine:</b> Apache Spark (Distributed)<br>
-    <b>ETL Time:</b> ~4 mins<br>
+    <b>ETL Time:</b> ~3 mins<br>
     <b>OLAP Engine:</b> DuckDB (In-Memory)<br>
-    <b>Query Latency:</b> < 150ms
+    <b>Query Latency:</b> < 500ms
     </div>
     """, unsafe_allow_html=True)
     

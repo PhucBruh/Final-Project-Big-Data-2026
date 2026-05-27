@@ -1,3 +1,4 @@
+import time
 from ingest import create_spark_session, ingest_data
 from clean_events import clean_events
 from reconstruct_possessions import reconstruct_possessions, build_fact_possessions
@@ -5,6 +6,12 @@ from build_team_metrics import classify_shots, build_fact_shots, build_fact_team
 from build_player_metrics import build_fact_player_metrics
 
 def main():
+    total_start_time = time.time()
+    
+    print("=" * 50)
+    print("STARTING SPARK ETL PIPELINE")
+    print("=" * 50)
+    
     spark = create_spark_session()
     
     print("Ingesting Data...")
@@ -33,8 +40,11 @@ def main():
     print("Building Player Metrics...")
     fact_player_metrics = build_fact_player_metrics(df_classified, fact_shots)
     
-    # Writing to Parquet
-    print("Writing fact_shots to Parquet...")
+    # Writing to Parquet (Triggers Spark Lazy Evaluation)
+    print("\nExecuting DAG and Writing to Parquet...")
+    write_start_time = time.time()
+    
+    print("  -> Writing fact_shots...")
     fact_shots.write.partitionBy("season").mode("overwrite").parquet("data/processed/fact_shots")
     
     print("Writing fact_possessions to Parquet...")
@@ -49,6 +59,13 @@ def main():
     print("Writing fact_player_metrics to Parquet...")
     fact_player_metrics.write.partitionBy("season").mode("overwrite").parquet("data/processed/fact_player_metrics")
     
+    total_end_time = time.time()
+    
+    print("\n" + "="*50)
+    print("ETL PIPELINE BENCHMARK RESULTS")
+    print("="*50)
+    print(f"Total Execution Time (including setup) : {(total_end_time - total_start_time) / 60:.2f} minutes")
+    print(f"Spark Compute & Write Time             : {(total_end_time - write_start_time) / 60:.2f} minutes")
     print("ETL Pipeline completed successfully!")
 
 if __name__ == "__main__":

@@ -1,0 +1,25 @@
+flowchart TB
+    subgraph Dimensions["Shared Dimensions"]
+        D1["team<br>(BOS, LAL, GSW...)"]
+        D2["season<br>(1997-2026, Partition Key)"]
+        D3["is_clutch<br>(0 = Normal, 1 = Clutch)"]
+    end
+
+    subgraph RawFacts["Raw-Level Fact Tables"]
+        F1["fact_shots"]
+        F2["fact_possessions"]
+    end
+
+    subgraph AggFacts["Aggregated Fact Tables"]
+        F3["fact_team_metrics"]
+        F4["fact_player_metrics"]
+    end
+
+    D1 & D2 & D3 -.->|shared keys| F1
+    D1 & D2 & D3 -.->|shared keys| F2
+    D1 & D2 & D3 -.->|shared keys| F3
+    D1 & D2 & D3 -.->|shared keys| F4
+
+    F2 -->|"GROUP BY team, season<br>+ Self-Join for DRtg"| F3
+    F1 -->|"GROUP BY team, season<br>shot zone counts"| F3
+    F1 -->|"GROUP BY player, season<br>points & attempts"| F4

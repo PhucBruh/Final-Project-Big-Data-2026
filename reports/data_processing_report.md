@@ -2,9 +2,11 @@
 
 Bản báo cáo này mô tả toàn bộ vòng đời dữ liệu của dự án NBA Big Data Analytics, từ lúc nạp dữ liệu thô (Ingestion) cho đến lúc kết xuất trên các biểu đồ (Visualization).
 
+> Xem sơ đồ kiến trúc và ER Diagram tại file [diagrams.md](./diagrams.md)
+
 ## PHẦN 1: QUY TRÌNH ETL (Data Processing Pipeline)
 
-Dự án xử lý dữ liệu Play-by-Play (PbP) của hơn 25 mùa giải NBA bằng **Apache Spark** theo mô hình ELT/ETL hiện đại.
+Dự án xử lý dữ liệu Play-by-Play (PbP) của 29 mùa giải NBA bằng **Apache Spark** theo mô hình ELT/ETL hiện đại.
 
 ### Bước 1: Ingestion & Schema Definition
 
@@ -209,7 +211,7 @@ Mọi công thức phân tích giờ đây được DuckDB tính toán on-the-fl
 
 ### 1. Cấu trúc Công nghệ (Tech Stack) và Lý do lựa chọn
 
-- **Apache Spark (PySpark):** Đóng vai trò là cỗ máy ETL (Trích xuất, Làm sạch, Nạp). Dữ liệu Play-by-Play của 26 năm lên tới hàng chục triệu sự kiện. Việc dùng thư viện Pandas truyền thống sẽ gây tràn RAM (Out-of-memory). PySpark giải quyết bài toán này nhờ cơ chế Distributed Computing (xử lý phân tán trên nhiều lõi CPU).
+- **Apache Spark (PySpark):** Đóng vai trò là cỗ máy ETL (Trích xuất, Làm sạch, Nạp). Dữ liệu Play-by-Play của 29 năm lên tới hàng chục triệu sự kiện. Việc dùng thư viện Pandas truyền thống sẽ gây tràn RAM (Out-of-memory). PySpark giải quyết bài toán này nhờ cơ chế Distributed Computing (xử lý phân tán trên nhiều lõi CPU).
 - **Định dạng Parquet:** Được dùng để lưu trữ dữ liệu sau khi làm sạch. Là dạng lưu trữ hình cột (Columnar Storage) tích hợp nén cao, cực kỳ tối ưu cho bài toán OLAP vì nó cho phép hệ thống chỉ đọc những cột cần thiết thay vì lướt qua toàn bộ dòng.
 - **DuckDB:** Đóng vai trò là Query Engine (Serving Layer). Thay vì phải dựng lên một server CSDL cồng kềnh (PostgreSQL, MySQL), DuckDB là CSDL In-Memory siêu tốc độ, có thể thực thi SQL trực tiếp lên các file Parquet với tốc độ dưới micro-giây.
 - **Streamlit & Plotly:** Nền tảng xây dựng Dashboard UI và đồ thị tương tác cao. Kết hợp cùng các bộ thư viện vệ tinh (`streamlit-antd-components`, `streamlit-extras`) để nâng cấp trải nghiệm người dùng (UX) và giao diện (UI) đạt chuẩn các sản phẩm BI thương mại.
@@ -220,7 +222,7 @@ Mọi công thức phân tích giờ đây được DuckDB tính toán on-the-fl
 | :------------------------------ | :------------------------------ |
 | **Kỷ nguyên dữ liệu (Seasons)** | 1997 – 2026 (29 năm)            |
 | **Số lượng trận đấu (Games)**   | ~35,000+ trận                   |
-| **Quy quy mô dữ liệu (Events)** | ~18 Triệu+ sự kiện              |
+| **Quy mô dữ liệu (Events)**     | ~18 Triệu+ sự kiện              |
 | **Thời gian chạy ETL (Spark)**  | ~4 phút (Xử lý toàn bộ lịch sử) |
 | **Tốc độ truy vấn UI (DuckDB)** | < 150 ms / biểu đồ              |
 | **Độ trễ lọc Clutch Mode**      | Real-time (Tức thì)             |
@@ -236,7 +238,7 @@ Mọi công thức phân tích giờ đây được DuckDB tính toán on-the-fl
 
 ### 2. Sự đánh đổi giữa Pre-aggregation và Dynamic OLAP
 
-Trong thiết kế Data Warehouse cho Big Data, việc tính toán tức thì trên 15 triệu sự kiện đòi hỏi sự phân chia nhiệm vụ chiến lược:
+Trong thiết kế hệ thống Big Data, việc tính toán tức thì trên 18 triệu sự kiện đòi hỏi sự phân chia nhiệm vụ chiến lược:
 
 - **Tối ưu tốc độ (Pre-aggregation):** Đối với các chỉ số tính toán phức tạp đòi hỏi Join nhiều bảng (như DRtg, Pace), dữ liệu được cộng dồn (aggregated) sẵn ở tầng Spark ETL dựa trên định nghĩa Clutch tiêu chuẩn của NBA (5 phút cuối trận, cách biệt $\leq$ 5 điểm). Nhờ vậy, `fact_team_metrics` trở nên siêu nhỏ gọn, giúp biểu đồ tải mượt mà trong chớp mắt.
 - **Tối đa linh hoạt (On-the-fly Calculation):** Đối với biểu đồ **Shot Chart** và **Shot Profile**, hệ thống giữ lại các cột thô `seconds_remaining` và `score_margin` vào bảng `fact_shots`. Cho phép hiển thị thêm thanh trượt (Sliders) để người dùng tự do định nghĩa khái niệm "Clutch" (VD: 10 giây cuối, cách biệt 1 điểm). DuckDB sẽ lãnh ấn quét trực tiếp hàng triệu tọa độ thô, mang lại khả năng tùy biến cực độ cho phân tích chiến thuật chi tiết.

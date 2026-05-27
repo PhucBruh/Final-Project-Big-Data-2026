@@ -1,0 +1,63 @@
+erDiagram
+    %% Định nghĩa bảng fact_shots
+    fact_shots {
+        STRING shooter "Tên cầu thủ ném"
+        STRING team "Đội bóng"
+        FLOAT x "Tọa độ X (đã scale)"
+        FLOAT y "Tọa độ Y (đã scale)"
+        STRING shot_zone "Vùng ném (Rim, Mid, 3PT)"
+        INT made_flag "1=Made, 0=Miss"
+        INT shot_value "2 hoặc 3 điểm"
+        INT season PK "Partition Key (VD: 2020)"
+        INT is_clutch "1=Clutch, 0=Normal"
+        INT period "Hiệp đấu"
+        FLOAT seconds_remaining "Giây còn lại"
+        INT score_margin "Cách biệt điểm"
+    }
+
+    %% Định nghĩa bảng fact_possessions
+    fact_possessions {
+        STRING possession_id PK "ID Pha bóng (Unique)"
+        STRING gameid "Mã trận đấu"
+        STRING team "Đội kiểm soát bóng"
+        INT points_scored "Tổng điểm ghi được"
+        INT is_turnover "1=Mất bóng, 0=Không"
+        INT season PK "Partition Key"
+        INT is_clutch "Trạng thái Clutch"
+    }
+
+    %% Định nghĩa bảng fact_team_metrics
+    fact_team_metrics {
+        STRING team PK "Mã đội bóng"
+        INT season PK "Partition Key"
+        INT is_clutch PK "Trạng thái Clutch"
+        INT games_played "Số trận đã đấu"
+        INT total_possessions "Tổng số pha bóng"
+        INT points_scored "Tổng điểm ghi được"
+        INT def_possessions "Tổng pha phòng ngự"
+        INT points_allowed "Tổng điểm bị ghi"
+        INT total_fga "Tổng số cú ném"
+        INT three_pt_attempts "Số cú ném 3"
+        INT rim_attempts "Số cú ném cận rổ"
+        INT midrange_attempts "Số cú ném tầm trung"
+    }
+
+    %% Định nghĩa bảng fact_player_metrics
+    fact_player_metrics {
+        STRING player PK "Tên cầu thủ"
+        INT season PK "Partition Key"
+        INT is_clutch PK "Trạng thái Clutch"
+        INT pts "Tổng điểm"
+        INT fga "Tổng số cú ném (FGA)"
+        INT fgm "Ném thành công (FGM)"
+        INT fg3m "Ném 3 thành công"
+        INT fg3a "Số cú ném 3 (FG3A)"
+        INT fta "Ném phạt (FTA)"
+        INT tov "Mất bóng (Turnover)"
+    }
+
+    %% Quan hệ logic (Logical Relationships)
+    fact_possessions ||--o{ fact_team_metrics : "Aggregate: Tính ORtg, Pace"
+    fact_possessions ||--o{ fact_team_metrics : "Self-Join: Tính DRtg"
+    fact_shots ||--o{ fact_team_metrics : "Aggregate: Đếm vùng ném"
+    fact_shots ||--o{ fact_player_metrics : "Aggregate: Tính điểm cầu thủ"
