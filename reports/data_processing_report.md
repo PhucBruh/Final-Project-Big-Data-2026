@@ -223,8 +223,8 @@ Mọi công thức phân tích giờ đây được DuckDB tính toán on-the-fl
 | **Kỷ nguyên dữ liệu (Seasons)** | 1997 – 2026 (29 năm)            |
 | **Số lượng trận đấu (Games)**   | ~35,000+ trận                   |
 | **Quy mô dữ liệu (Events)**     | ~18 Triệu+ sự kiện              |
-| **Thời gian chạy ETL (Spark)**  | ~4 phút (Xử lý toàn bộ lịch sử) |
-| **Tốc độ truy vấn UI (DuckDB)** | < 150 ms / biểu đồ              |
+| **Thời gian chạy ETL (Spark)**  | ~3 phút (Xử lý toàn bộ lịch sử) |
+| **Tốc độ truy vấn UI (DuckDB)** | < 500 ms / biểu đồ              |
 | **Độ trễ lọc Clutch Mode**      | Real-time (Tức thì)             |
 
 ---
@@ -242,3 +242,28 @@ Trong thiết kế hệ thống Big Data, việc tính toán tức thì trên 18
 
 - **Tối ưu tốc độ (Pre-aggregation):** Đối với các chỉ số tính toán phức tạp đòi hỏi Join nhiều bảng (như DRtg, Pace), dữ liệu được cộng dồn (aggregated) sẵn ở tầng Spark ETL dựa trên định nghĩa Clutch tiêu chuẩn của NBA (5 phút cuối trận, cách biệt $\leq$ 5 điểm). Nhờ vậy, `fact_team_metrics` trở nên siêu nhỏ gọn, giúp biểu đồ tải mượt mà trong chớp mắt.
 - **Tối đa linh hoạt (On-the-fly Calculation):** Đối với biểu đồ **Shot Chart** và **Shot Profile**, hệ thống giữ lại các cột thô `seconds_remaining` và `score_margin` vào bảng `fact_shots`. Cho phép hiển thị thêm thanh trượt (Sliders) để người dùng tự do định nghĩa khái niệm "Clutch" (VD: 10 giây cuối, cách biệt 1 điểm). DuckDB sẽ lãnh ấn quét trực tiếp hàng triệu tọa độ thô, mang lại khả năng tùy biến cực độ cho phân tích chiến thuật chi tiết.
+
+---
+
+## PHẦN 6: TÀI LIỆU THAM KHẢO & NGUỒN CHUẨN (REFERENCES)
+
+Để đảm bảo tính toàn vẹn và độ tin cậy của mô hình dữ liệu (Data Integrity), mọi công thức toán học và hệ quy chiếu hình học trong đồ án đều được tham chiếu từ các tài liệu chuẩn của ngành công nghiệp phân tích bóng rổ (NBA Analytics).
+
+### 1. Nguồn Công thức Chỉ số Nâng cao (Advanced Stats Formulas)
+
+- **True Shooting Percentage (TS%) & Effective Field Goal Percentage (eFG%)**:
+  - _Nguồn:_ **Basketball-Reference Glossary** (Trang thống kê lưu trữ dữ liệu lịch sử chuẩn nhất thế giới).
+  - _Link tham chiếu:_ [https://www.basketball-reference.com/about/glossary.html](https://www.basketball-reference.com/about/glossary.html)
+  - _Ghi chú áp dụng:_ Đồ án sử dụng chính xác hệ số bù `0.44` cho ném phạt (FTA) và `0.5` cho ném 3 (3PM) theo đúng quy chuẩn phân tích bóng rổ hiện đại.
+- **Offensive Rating (ORtg) / Defensive Rating (DRtg) / Pace**:
+  - _Nguồn:_ **NBA Advanced Stats Glossary** (Từ điển thống kê chính thức của NBA).
+  - _Link tham chiếu:_ [https://www.nba.com/stats/help/glossary](https://www.nba.com/stats/help/glossary)
+  - _Ghi chú áp dụng:_ Chỉ số được quy chuẩn hóa trên 100 pha bóng (per 100 possessions) thay vì tính trung bình mỗi trận, nhằm loại bỏ hoàn toàn độ nhiễu của nhịp độ thi đấu (Pace).
+
+### 2. Nguồn Hệ Tọa độ Sân bóng (Court Dimensions & Coordinates)
+
+- **Hệ trục tọa độ (X: -250 đến 250, Y: -47.5 đến 422.5)**:
+  - _Nguồn:_ **Tài liệu Endpoint API của NBA (`shotchartdetail`)**.
+  - _Tài liệu mã nguồn mở:_ Thư viện cộng đồng Khoa học Dữ liệu **swar/nba_api** trên GitHub.
+  - _Link tham chiếu:_ [nba_api / shotchartdetail.md](https://github.com/swar/nba_api/blob/master/docs/nba_api/stats/endpoints/shotchartdetail.md)
+  - _Ghi chú áp dụng:_ Tọa độ trong đồ án giữ nguyên chuẩn raw data của tổ chức NBA: `1 unit = 0.1 feet`. Trục X rộng 500 units (50 feet), tâm rổ đặt tại gốc `(0,0)`. Do đó, đồ án sử dụng biểu đồ **Nửa sân (Half-court)** làm chuẩn hiển thị cho mọi phân tích Shot Chart để tối ưu hóa mật độ dữ liệu tại khu vực ném (Shot zones), chuẩn hóa y hệt các hệ thống Analytics nội bộ của các đội bóng NBA.
