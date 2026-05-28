@@ -173,3 +173,64 @@ WHERE
   AND is_clutch = 0
 LIMIT
   5000;
+
+-- DASHBOARD QUERY 4: Player Shot Profile (Lấy dữ liệu tỷ lệ vùng ném của Cầu thủ)
+SELECT
+  season,
+  CAST(
+    SUM(
+      CASE
+        WHEN shot_zone = 'Restricted Area' THEN 1
+        ELSE 0
+      END
+    ) AS FLOAT
+  ) / COUNT(*) AS rim_rate,
+  CAST(
+    SUM(
+      CASE
+        WHEN shot_zone = 'Midrange' THEN 1
+        ELSE 0
+      END
+    ) AS FLOAT
+  ) / COUNT(*) AS midrange_rate,
+  CAST(
+    SUM(
+      CASE
+        WHEN shot_zone IN ('Corner 3', 'Above Break 3')
+        OR shot_zone LIKE '%3%' THEN 1
+        ELSE 0
+      END
+    ) AS FLOAT
+  ) / COUNT(*) AS three_point_rate
+FROM
+  'data/processed/fact_shots/**/*.parquet'
+WHERE
+  shooter = 'S. Curry'
+  AND season >= 2015
+  AND season <= 2024
+  AND is_clutch = 0
+GROUP BY
+  season
+ORDER BY
+  season;
+
+-- DASHBOARD QUERY 5: League Average Baseline (Tính trung bình toàn giải để làm đường cơ sở)
+SELECT
+  season,
+  CAST(SUM(total_possessions) AS FLOAT) / MAX(games_played) AS pace,
+  CASE
+    WHEN SUM(total_possessions) > 0 THEN (
+      CAST(SUM(points_scored) AS FLOAT) / SUM(total_possessions)
+    ) * 100
+    ELSE 0
+  END AS ORtg
+FROM
+  'data/processed/fact_team_metrics/**/*.parquet'
+WHERE
+  season >= 2015
+  AND season <= 2024
+  AND is_clutch = 0
+GROUP BY
+  season
+ORDER BY
+  season;

@@ -56,8 +56,5 @@ erDiagram
         INT tov "Mất bóng (Turnover)"
     }
 
-    %% Quan hệ logic (Logical Relationships)
-    fact_possessions ||--o{ fact_team_metrics : "Aggregate: Tính ORtg, Pace"
-    fact_possessions ||--o{ fact_team_metrics : "Self-Join: Tính DRtg"
-    fact_shots ||--o{ fact_team_metrics : "Aggregate: Đếm vùng ném"
-    fact_shots ||--o{ fact_player_metrics : "Aggregate: Tính điểm cầu thủ"
+    %% Ghi chú: Các bảng này là ĐỘC LẬP (Denormalized) trong Parquet Data Lake
+    %% Không có quan hệ Khóa ngoại (Foreign Key) để tối ưu hóa tốc độ truy vấn OLAP.
